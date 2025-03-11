@@ -18,6 +18,10 @@ class NYTBestSellerService
 
     public function getBestSellers(array $params): array
     {
+        if (app()->environment('testing') || app()->environment('local')) {
+            return $this->loadMockData();
+        }
+
         $params['api-key'] = $this->apiKey;
         $cacheKey = 'nyt_' . md5(json_encode($params));
 
@@ -30,5 +34,16 @@ class NYTBestSellerService
 
             return $response->json();
         });
+    }
+
+    private function loadMockData(): array
+    {
+        $mockPath = storage_path('app/mocks/nyt_best_sellers.json');
+
+        if (!file_exists($mockPath)) {
+            return ['error' => 'Mock file not found'];
+        }
+
+        return json_decode(file_get_contents($mockPath), true) ?? ['error' => 'Invalid JSON'];
     }
 }
