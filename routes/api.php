@@ -11,7 +11,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
     Route::get('user', [UserController::class, 'show']);
     Route::get('best-sellers', [BestSellerController::class, 'index']);
 });
