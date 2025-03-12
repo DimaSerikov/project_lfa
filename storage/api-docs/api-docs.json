@@ -63,7 +63,7 @@
                 ],
                 "summary": "User login",
                 "description": "Authenticate a user and return an API token",
-                "operationId": "3e5fe318fe58355689b1608ed9f5430b",
+                "operationId": "3d4989b0fe826148a1dd074f5b7dc6ce",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -194,7 +194,7 @@
                     "User"
                 ],
                 "summary": "Get authenticated user info",
-                "operationId": "398c8244adfdd307f1f5056e28e4d548",
+                "operationId": "15f4414df08d3ff3d55e32623a8d70b6",
                 "responses": {
                     "200": {
                         "description": "Successful retrieval of user data",

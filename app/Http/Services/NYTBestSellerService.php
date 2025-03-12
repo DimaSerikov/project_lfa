@@ -19,7 +19,7 @@ class NYTBestSellerService
     public function getBestSellers(array $params): array
     {
         if (app()->environment('testing') || app()->environment('local')) {
-            return $this->loadMockData();
+            return $this->loadMockData($params);
         }
 
         $params['api-key'] = $this->apiKey;
@@ -36,7 +36,7 @@ class NYTBestSellerService
         });
     }
 
-    private function loadMockData(): array
+    private function loadMockData(array $params = []): array
     {
         $mockPath = storage_path('app/mocks/nyt_best_sellers.json');
 
@@ -44,6 +44,31 @@ class NYTBestSellerService
             return ['error' => 'Mock file not found'];
         }
 
-        return json_decode(file_get_contents($mockPath), true) ?? ['error' => 'Invalid JSON'];
+        $data = json_decode(file_get_contents($mockPath), true);
+        $books = collect($data['results'] ?? []);
+
+        if (!empty($params['author'])) {
+            $books = $books->filter(fn($book) => str_contains(strtolower($book['author']), strtolower($params['author'])));
+        }
+
+        if (!empty($params['title'])) {
+            $books = $books->filter(fn($book) => str_contains(strtolower($book['title']), strtolower($params['title'])));
+        }
+
+        if (!empty($params['isbn']) && is_array($params['isbn'])) {
+            $books = $books->filter(fn($book) =>
+                !empty($book['isbns']) &&
+                collect($book['isbns'])->pluck('isbn13')->intersect($params['isbn'])->isNotEmpty()
+            );
+        }
+
+        $offset = isset($params['offset']) ? max(0, (int) $params['offset']) : 0;
+        $books = $books->slice($offset)->values();
+
+        return [
+            'status' => 'OK',
+            'num_results' => $books->count(),
+            'results' => $books->all()
+        ];
     }
 }

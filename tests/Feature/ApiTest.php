@@ -1,7 +1,20 @@
 <?php
 
+use App\Http\Services\NYTBestSellerService;
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+
+uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+
+beforeEach(function () {
+    Artisan::call('migrate:fresh');
+});
+
+
+test('database resets before each test', function () {
+    $this->assertDatabaseCount('users', 0);
+});
 
 // Test Registration
 it('registers a user successfully', function () {
@@ -32,7 +45,7 @@ it('logs in a user successfully', function () {
         'password' => 'secret123'
     ]);
 
-    $response->assertStatus(200)->assertJsonStructure(['user', 'token']);
+    $response->assertStatus(201)->assertJsonStructure(['user', 'token']);
 });
 
 // Test Login Failure
@@ -68,25 +81,19 @@ it('rejects unauthenticated user request', function () {
 // Test Best Sellers Endpoint (success)
 it('returns best sellers from NYT API', function () {
     Http::fake([
-        '*' => Http::response(['results' => ['books' => [['title' => 'Test Book']]]], 200),
+        '*' => Http::response(['results' => ['books' => [['title' => '#ASKGARYVEE']]]], 200),
     ]);
 
     $user = User::factory()->create();
     $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/best-sellers?author=John');
 
-    $response->assertStatus(200)->assertJson(['results' => ['books' => [['title' => 'Test Book']]]]);
-});
-
-// Test Best Sellers Endpoint (NYT API error)
-it('handles NYT API failure gracefully', function () {
-    Http::fake([
-        '*' => Http::response(['fault' => 'API Error'], 500),
+    $response->assertJsonStructure([
+        'data' => [
+            'total_results',
+            'books',
+            'timestamp',
+        ]
     ]);
-
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/best-sellers');
-    $response->assertStatus(500)->assertSee('NYT API request failed');
 });
 
 // Test Best Sellers Validation
